@@ -16,6 +16,7 @@ hah.py -- checks for newest servers on Hetzner server auction (server-bidding) a
 
 optional arguments:
   -h, --help            show this help message and exit
+  --tax TAX             tax rate (VAT) in percents, defaults to 19 (Germany)
   --price PRICE         max price (€)
   --disk-size DISK_SIZE
                         min disk capacity (GB)
