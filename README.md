@@ -25,7 +25,7 @@ optional arguments:
   --ram RAM             min RAM (GB)
   --ecc                 require ECC memory
   -f [F]                state file
-
+  --test-mode           do not send actual messages and ignore state file
 ```
 
 Example: `./hah.py --price 51 --disk-size 3000 --ram 24 --cpu-score 10000` - this will get servers cheaper than 51 EUR with more than 24GB of RAM, disks at least 3TB and CPU with score better tan 10k.
