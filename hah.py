@@ -8,6 +8,7 @@ parser.add_argument('--tax',        nargs=1,required=False,type=int,help='tax ra
 parser.add_argument('--price',      nargs=1,required=True,type=int, help='max price (€)')
 parser.add_argument('--disk-size',  nargs=1,required=True,type=int, help='min disk capacity (GB)')
 parser.add_argument('--disk-quick', action='store_true',            help='require SSD/NVMe')
+parser.add_argument('--disk-ent',   action='store_true',            help='require Enterpise HDD')
 parser.add_argument('--cpu-score',  nargs=1,required=True,type=int, help='min CPU benchmark score')
 parser.add_argument('--ram',        nargs=1,required=True,type=int, help='min RAM (GB)')
 parser.add_argument('--ecc',        action='store_true',            help='require ECC memory')
@@ -35,11 +36,12 @@ for server in servers:
 	price      = price_value<=args.price[0]
 	disk_size  = server['hdd_size']>=args.disk_size[0]
 	disk_quick = server['is_highio'] if args.disk_quick else True
+	disk_ent   = ("Ent. HDD" in server['freetext']) if args.disk_ent else True
 	cpu_score  = server['cpu_benchmark']>=args.cpu_score[0]
 	ram        = server['ram']>=args.ram[0]
 	ecc        = server['is_ecc'] if args.ecc else True
 
-	if price and disk_size and disk_quick and cpu_score and ram and ecc:
+	if price and disk_size and disk_quick and disk_ent and cpu_score and ram and ecc:
 		msg="Hetzner server %.2f€: %dGB, %s (%d), %s HDD \nhttps://www.hetzner.com/sb ID: %d" % (price_value, server['ram'],server['cpu'],server['cpu_benchmark'],server['hdd_hr'],server['key'])
 		print(msg)
 
