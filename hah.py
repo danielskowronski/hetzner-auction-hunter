@@ -8,7 +8,9 @@ parser.add_argument('--tax',        nargs=1,required=False,type=int,help='tax ra
 parser.add_argument('--price',      nargs=1,required=True,type=int, help='max price (€)')
 parser.add_argument('--disk-size',  nargs=1,required=True,type=int, help='min disk capacity (GB)')
 parser.add_argument('--disk-quick', action='store_true',            help='require SSD/NVMe')
-parser.add_argument('--disk-ent',   action='store_true',            help='require Enterpise HDD')
+parser.add_argument('--disk-ent',   action='store_true',            help='require Enterpise HDD or Datacenter SSD')
+parser.add_argument('--hw-raid',    action='store_true',            help='require Hardware RAID')
+parser.add_argument('--red-psu',    action='store_true',            help='require Redundant PSU')
 parser.add_argument('--cpu-score',  nargs=1,required=True,type=int, help='min CPU benchmark score')
 parser.add_argument('--ram',        nargs=1,required=True,type=int, help='min RAM (GB)')
 parser.add_argument('--ecc',        action='store_true',            help='require ECC memory')
@@ -32,11 +34,29 @@ for server in servers:
 	if not args.test_mode and str(server['key']) in idsProcessed:
 		continue
 
+	sp_ent_hdd=False
+	sp_dc_ssd=False
+	sp_hw_raid=False
+	sp_red_psu=False
+
+	for special in server['specials']:
+		if special=='Ent. HDD':
+			sp_ent_hdd=True
+		if special=='DC SSD':
+			sp_dc_ssd=True
+		if special=='HWR':
+			sp_hw_raid=True
+		if special=='Red.PS':
+			sp_red_psu=True
+
+
 	price_value= round((100+args.tax[0])*float(server['price'])/100,0)
 	price      = price_value<=args.price[0]
 	disk_size  = server['hdd_size']>=args.disk_size[0]
 	disk_quick = server['is_highio'] if args.disk_quick else True
-	disk_ent   = ("Ent. HDD" in server['freetext']) if args.disk_ent else True
+	disk_ent   = (sp_ent_hdd or sp_dc_ssd) if args.disk_ent else True
+	hw_raid    = sp_hw_raid if args.hw_raid else True
+	red_psu    = sp_red_psu if args.red_psu else True
 	cpu_score  = server['cpu_benchmark']>=args.cpu_score[0]
 	ram        = server['ram']>=args.ram[0]
 	ecc        = server['is_ecc'] if args.ecc else True

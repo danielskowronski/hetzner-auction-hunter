@@ -10,7 +10,8 @@ https://www.hetzner.com/sb
 
 ## usage
 ```
-usage: hah.py [-h] --price PRICE --disk-size DISK_SIZE [--disk-quick] [--disk-ent] --cpu-score CPU_SCORE --ram RAM [--ecc] [-f [F]]
+usage: hah.py [-h] [--tax TAX] --price PRICE --disk-size DISK_SIZE [--disk-quick] [--disk-ent] [--hw-raid] [--red-psu] --cpu-score CPU_SCORE --ram RAM [--ecc]
+              [-f [F]] [--test-mode]
 
 hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes them viatelegram_send
 
@@ -21,7 +22,9 @@ optional arguments:
   --disk-size DISK_SIZE
                         min disk capacity (GB)
   --disk-quick          require SSD/NVMe
-  --disk-ent            require Enterprise HDD
+  --disk-ent            require Enterpise HDD or Datacenter SSD
+  --hw-raid             require Hardware RAID
+  --red-psu             require Redundant PSU
   --cpu-score CPU_SCORE
                         min CPU benchmark score
   --ram RAM             min RAM (GB)
