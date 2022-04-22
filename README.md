@@ -14,6 +14,7 @@ https://www.hetzner.com/sb
 usage: hah.py [-h] [--tax TAX] --price PRICE [--disk-count DISK_COUNT] --disk-size DISK_SIZE
               [--disk-quick] [--disk-ent] [--hw-raid] [--red-psu] [--cpu-count CPU_COUNT]
               --cpu-score CPU_SCORE --ram RAM [--ecc] [--dc DC] [-f [F]] [--test-mode]
+              [--tgm-config TGM_CONFIG]
 
 hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes them via telegram_send
 
@@ -38,6 +39,8 @@ optional arguments:
   --dc DC               datacenter (FSN1-DC15) or location (FSN)
   -f [F]                state file
   --test-mode           do not send actual messages and ignore state file
+  --tgm-config TGM_CONFIG
+                        file path to custom telegram configuration
 ```
 
 Example: `./hah.py --price 51 --disk-size 3000 --ram 24 --cpu-score 10000` - this will get servers cheaper than 51 EUR with more than 24GB of RAM, disks at least 3TB and CPU with score better than 10k.

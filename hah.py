@@ -19,6 +19,7 @@ parser.add_argument('--ecc',        action='store_true',            help='requir
 parser.add_argument('--dc',         nargs=1,required=False,         help='datacenter (FSN1-DC15) or location (FSN)')
 parser.add_argument('-f',           nargs='?',                      help='state file')
 parser.add_argument('--test-mode',  action='store_true',            help='do not send actual messages and ignore state file')
+parser.add_argument('--tgm-config', nargs=1,required=False,         help='file path to custom telegram configuration')
 args = parser.parse_args()
 
 if not args.test_mode:
@@ -83,7 +84,11 @@ for server in servers:
 		print(msg)
 
 		if not args.test_mode:
-			telegram_send.send(messages=[msg], parse_mode="markdown")
+			if args.tgm_config:
+				telegram_send.send(messages=[msg], parse_mode="markdown", conf=args.tgm_config[0])
+			else:
+				telegram_send.send(messages=[msg], parse_mode="markdown")
+
 			f.write(","+str(server['key']))
 
 if not args.test_mode:
