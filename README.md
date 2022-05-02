@@ -38,6 +38,7 @@ optional arguments:
   --ecc                 require ECC memory
   --dc DC               datacenter (FSN1-DC15) or location (FSN)
   -f [F]                state file
+  --exclude-tax         exclude tax from output price
   --test-mode           do not send actual messages and ignore state file
   --tgm-config TGM_CONFIG
                         file path to custom telegram configuration
@@ -46,3 +47,12 @@ optional arguments:
 Example: `./hah.py --price 51 --disk-size 3000 --ram 24 --cpu-score 10000` - this will get servers cheaper than 51 EUR with more than 24GB of RAM, disks at least 3TB and CPU with score better than 10k.
 
 You'll probably want to put it in crontab.
+
+## docker
+
+Update `telegram-send.conf` file with your credentials (or run in test mode).
+
+```bash
+docker build . -t auctionhunter:latest
+docker run --rm auctionhunter:latest --price 100 --disk-size 3000 --ram 24 --cpu-score 10000 --test-mode
+```

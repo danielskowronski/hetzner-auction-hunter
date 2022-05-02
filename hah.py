@@ -18,6 +18,7 @@ parser.add_argument('--ram',        nargs=1,required=True,type=int, help='min RA
 parser.add_argument('--ecc',        action='store_true',            help='require ECC memory')
 parser.add_argument('--dc',         nargs=1,required=False,         help='datacenter (FSN1-DC15) or location (FSN)')
 parser.add_argument('-f',           nargs='?',                      help='state file')
+parser.add_argument('--exclude-tax', action='store_true',         help='exclude tax from output price')
 parser.add_argument('--test-mode',  action='store_true',            help='do not send actual messages and ignore state file')
 parser.add_argument('--tgm-config', nargs=1,required=False,         help='file path to custom telegram configuration')
 args = parser.parse_args()
@@ -64,7 +65,8 @@ for server in servers:
 	if args.dc is not None and args.dc[0] in server['datacenter']:
 		datacenter=True
 
-	price_value= round((100+args.tax[0])*float(server['price'])/100,0)
+	exclude_tax = args.exclude_tax
+	price_value=  round((100+args.tax[0])*float(server['price'])/100,0) if not exclude_tax else round((100)*float(server['price'])/100,0)
 	price      = price_value<=args.price[0]
 	disk_count = server['hdd_count']>=args.disk_count[0]
 	disk_size  = server['hdd_size']>=args.disk_size[0]
@@ -82,6 +84,7 @@ for server in servers:
 			(price_value, server['ram'],server['cpu'],server['cpu_benchmark'],server['hdd_hr'],
 			server['datacenter'][0],server['key'])
 		print(msg)
+
 
 		if not args.test_mode:
 			if args.tgm_config:
