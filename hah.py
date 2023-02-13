@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import httpx, json, telegram_send, argparse
+import requests, requests_file, json, notifiers, argparse
 
-parser = argparse.ArgumentParser(description='hah.py -- unofficially checks for newest servers on Hetzner server auction (server-bidding) and pushes them via telegram_send')
+parser = argparse.ArgumentParser(description='hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library')
+parser.add_argument('--data-url',    nargs=1,required=False,type=str, help='URL to live_data_sb.json', default=['https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'])
+parser.add_argument('--provider',    nargs=1,required=True,type=str,  help='Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html')
 parser.add_argument('--tax',         nargs=1,required=False,type=int, help='tax rate (VAT) in percents, defaults to 19 (Germany)', default=[19])
 parser.add_argument('--price',       nargs=1,required=False,type=int, help='max price (€)')
 parser.add_argument('--disk-count',  nargs=1,required=False,type=int, help='min disk count', default=[1])
@@ -21,7 +23,6 @@ parser.add_argument('--dc',          nargs=1,required=False,          help='data
 parser.add_argument('-f',            nargs='?',                       help='state file')
 parser.add_argument('--exclude-tax', action='store_true',             help='exclude tax from output price')
 parser.add_argument('--test-mode',   action='store_true',             help='do not send actual messages and ignore state file')
-parser.add_argument('--tgm-config',  nargs=1,required=False,          help='file path to custom telegram configuration')
 parser.add_argument('--debug',       action='store_true',             help='debug mode')
 parser.add_argument('--send-payload',action='store_true',             help='send server data as JSON payload')
 args = parser.parse_args()
@@ -37,13 +38,17 @@ if not args.test_mode:
 
 servers = None
 try:
-    client = httpx.Client(http2=True)
-    rsp = client.get('https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json')
-    servers = json.loads(rsp.text)['server']
+	s = requests.Session()
+	s.mount('file://', requests_file.FileAdapter())
+	rsp = s.get(args.data_url[0], headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15'})
+	servers = json.loads(rsp.text)['server']
 except Exception as e:
-    print('Failed to download auction list')
-    print(e)
-    exit(1)
+	print('Failed to download auction list')
+	print(e)
+	exit(1)
+
+if not args.test_mode:
+	notifier=notifiers.get_notifier(args.provider[0])
 
 for server in servers:
 	if args.debug:
@@ -111,11 +116,7 @@ for server in servers:
 
 
 		if not args.test_mode:
-			if args.tgm_config:
-				telegram_send.send(messages=[msg], parse_mode="html", conf=args.tgm_config[0])
-			else:
-				telegram_send.send(messages=[msg], parse_mode="html")
-
+			notifier.notify(message=msg, html=True)
 			f.write(","+str(server['key']))
 
 if not args.test_mode:

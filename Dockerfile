@@ -8,4 +8,4 @@ RUN python3 -m pip install --no-cache-dir -r /requirements.txt
 
 COPY hah.py /hah.py
 
-ENTRYPOINT [ "./hah.py", "--tgm-config", "/etc/telegram-send.conf"]
+ENTRYPOINT [ "./hah.py" ]

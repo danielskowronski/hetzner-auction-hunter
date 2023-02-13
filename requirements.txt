@@ -1,3 +1,2 @@
-httpx[http2]
-telegram-send==0.30
-python-telegram-bot==13.5
+requests_file==1.2
+notifiers==1.3
