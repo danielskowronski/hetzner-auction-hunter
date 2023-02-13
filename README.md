@@ -48,7 +48,7 @@ options:
 
 ### directly on machine
 
-To get servers cheaper than 100 EUR with more than 24GB of RAM, disks at least 3TB:
+To get servers cheaper than 38 EUR with more than 24GB of RAM, disks at least 3TB:
 
 ```bash
 python3 -m venv .
@@ -62,7 +62,7 @@ You'll probably want to put it in crontab.
 
 ### docker
 
-![Docker Pulls](https://img.shields.io/docker/pulls/danielskowronski/hetzner-auction-hunter)
+[![Docker Pulls](https://img.shields.io/docker/pulls/danielskowronski/hetzner-auction-hunter)](https://hub.docker.com/repository/docker/danielskowronski/hetzner-auction-hunter)
 
 Run in test mode or change path `"${HOME}/Library/Application Support/telegram-send.conf"` to where your local telegram-send installed config. 
 
