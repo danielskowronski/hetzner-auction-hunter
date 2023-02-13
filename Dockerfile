@@ -1,9 +1,11 @@
-FROM python:3.8-slim-buster
+FROM python:3.10-slim-buster
 
-RUN python -m pip install httpx[http2]
-RUN python -m pip install telegram_send
+LABEL desc="hetzner-auction-hunter"
+LABEL website="https://github.com/danielskowronski/hetzner-auction-hunter"
 
-ADD hah.py hah.py
-ADD telegram-send.conf /etc/telegram-send.conf
+COPY requirements.txt /requirements.txt
+RUN python3 -m pip install --no-cache-dir -r /requirements.txt
+
+COPY hah.py /hah.py
 
 ENTRYPOINT [ "./hah.py", "--tgm-config", "/etc/telegram-send.conf"]
