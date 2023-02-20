@@ -6,6 +6,8 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/danielskowronski/hetzner-auction-hunter)](https://hub.docker.com/repository/docker/danielskowronski/hetzner-auction-hunter)
 
+The price displayed on hetzner.com by default includes monthly rate for IPv4 address, therefore it's slightly higher than one reported by this tool. You can disable it by toggling *Enable IPv6 only* switch available on top of the list (on hetzner.com). 
+
 ## requirements
 
 * python3
@@ -112,7 +114,7 @@ docker run --rm \
   -v /tmp/hah:/tmp/ \
   -e NOTIFIERS_PUSHOVER_USER=$NOTIFIERS_PUSHOVER_USER \
   -e NOTIFIERS_PUSHOVER_TOKEN=$NOTIFIERS_PUSHOVER_TOKEN \
-  hetzner-auction-hunter:latest --provider $HAH_PROVIDER --price 38 --disk-size 3000 --ram 24
+  hetzner-auction-hunter:latest --provider $HAH_PROVIDER --price 40 --disk-size 3000 --ram 24
 ```
 
 For more universal executions, you may consider using `docker run --env-file`.
