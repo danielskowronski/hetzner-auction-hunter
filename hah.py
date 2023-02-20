@@ -99,7 +99,7 @@ for server in servers:
 	inic        = sp_inic if args.inic else True
 
 	disk_descriptors=[desc for desc in server['description'] if " GB" in desc or " TB" in desc] # FIXME
-	if True or len(disk_descriptors)==0:
+	if len(disk_descriptors)==0:
 		disk_description="%dx %dGB" % (server['hdd_count'], server['hdd_size'])
 	else:
 		disk_description=", ".join(disk_descriptors)
@@ -114,9 +114,13 @@ for server in servers:
 			print(json.dumps(server))
 			msg+=" <pre>"+json.dumps(server)+"</pre>"
 
-
 		if not args.test_mode:
-			notifier.notify(message=msg, html=True)
+			if notifier.schema.get("properties").get("html"):
+				notifier.notify(message=msg, html=True)
+			elif notifier.schema.get("properties").get("parse_mode"):
+				notifier.notify(message=msg, parse_mode="html")
+			else:
+				notifier.notify(message=msg)
 			f.write(","+str(server['key']))
 
 if not args.test_mode:

@@ -59,8 +59,7 @@ You'll probably want to put it in crontab and make sure that state file is on pe
 #### prepare local env
 
 ```bash
-python3 -m venv .
-source ./bin/activate
+pyenv activate
 python3 -m pip install -r requirements.txt
 ```
 
@@ -86,6 +85,14 @@ export NOTIFIERS_GMAIL_TO="..." # recipient
 export HAH_PROVIDER=gmail
 ```
 
+For **Telegram** (discouraged, but provided for legacy compatibility): talk to [@BotFather](https://t.me/BotFather) to create new bot and obtain token, talk to [@myidbot](https://t.me/myidbot) to get your personal chat ID. Then export as follows: 
+
+```bash
+export NOTIFIERS_TELEGRAM_TOKEN="...:..."
+export NOTIFIERS_TELEGRAM_CHAT_ID="..." 
+export HAH_PROVIDER=telegram
+```
+
 #### run
 
 To get servers cheaper than 38 EUR with more than 24GB of RAM, disks at least 3TB:
@@ -108,7 +115,7 @@ docker run --rm \
   hetzner-auction-hunter:latest --provider $HAH_PROVIDER --price 38 --disk-size 3000 --ram 24
 ```
 
-For more universal executions you may consider using `docker run --env-file`.
+For more universal executions, you may consider using `docker run --env-file`.
 
 ## debugging
 
