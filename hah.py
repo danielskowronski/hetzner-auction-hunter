@@ -86,7 +86,7 @@ for server in servers:
 		datacenter=True
 
 	exclude_tax = args.exclude_tax
-	price_value = ((100+args.tax[0])*float(server['price'])/100) if not exclude_tax else ((100)*float(server['price'])/100)
+	price_value = round((100+args.tax[0])*float(server['price'])/100,0) if not exclude_tax else round((100)*float(server['price'])/100,0)
 	
 	price       = price_value<=args.price[0] if args.price else True
 	disk_count  = server['hdd_count']>=args.disk_count[0] if args.disk_count else True
