@@ -88,9 +88,9 @@ for server in servers:
   exclude_tax = args.exclude_tax
   price_value = ((100+args.tax[0])*float(server['price'])/100) if not exclude_tax else ((100)*float(server['price'])/100)
   
-  price       = price_value<=args.price[0] if args.price else True
-  disk_count  = server['hdd_count']>=args.disk_count[0] if args.disk_count else True
-  disk_size   = server['hdd_size']>=args.disk_size[0] if args.disk_size else True
+  price         = price_value<=args.price[0] if args.price else True
+  disk_count    = server['hdd_count']>=args.disk_count[0] if args.disk_count else True
+  disk_size     = server['hdd_size']>=args.disk_size[0] if args.disk_size else True
   disk_min_size = True
   if args.disk_min_size and server['serverDiskData']['general']:
     min_size = min(server['serverDiskData']['general'])
