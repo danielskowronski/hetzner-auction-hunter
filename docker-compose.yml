@@ -3,7 +3,6 @@ services:
     container_name: hetzner-auction-hunter
     image: hetzner-auction-hunter:latest
     volumes:
-      - "${HOME}/Library/Application Support/telegram-send.conf":/etc/telegram-send.conf
       - ./tmp/hah:/tmp/
     environment:
     command: --price 38 --disk-size 3000 --ram 24
