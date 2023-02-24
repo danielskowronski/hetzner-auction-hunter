@@ -17,12 +17,10 @@ The price displayed on hetzner.com by default includes monthly rate for IPv4 add
 ## usage
 
 ```
-usage: hah.py [-h] [--data-url DATA_URL] --provider PROVIDER [--tax TAX] [--price PRICE] [--disk-count DISK_COUNT] [--disk-size DISK_SIZE]
-              [--disk-quick] [--hw-raid] [--red-psu] [--gpu] [--ipv4] [--inic] [--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC]
-              [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--send-payload]
+usage: hah.py [-h] [--data-url DATA_URL] [--provider PROVIDER] [--tax TAX] [--price PRICE] [--disk-count DISK_COUNT] [--disk-size DISK_SIZE] [--disk-min-size DISK_MIN_SIZE] [--disk-quick] [--hw-raid] [--red-psu] [--gpu] [--ipv4] [--inic]
+              [--cpu-count CPU_COUNT] [--ram RAM] [--ecc] [--dc DC] [-f [F]] [--exclude-tax] [--test-mode] [--debug] [--send-payload]
 
-hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers
-library
+hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library
 
 options:
   -h, --help            show this help message and exit
@@ -34,6 +32,8 @@ options:
                         min disk count
   --disk-size DISK_SIZE
                         min disk capacity (GB)
+  --disk-min-size DISK_MIN_SIZE
+                        min disk capacity per disk (GB)
   --disk-quick          require SSD/NVMe
   --hw-raid             require Hardware RAID
   --red-psu             require Redundant PSU

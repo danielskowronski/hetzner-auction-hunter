@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import requests
 import requests_file
 import json
@@ -28,6 +27,14 @@ class Server:
             "serverDiskData", []).get("sata", []))
         return nvme_count+sata_count > 0
 
+    def get_smallest_disk_size(self):
+        general_drives = self.disk_map.get("general", [])
+        if len(general_drives) > 0:
+            smallest_drive = min(general_drives)
+        else:
+            smallest_drive = -1
+        return smallest_drive
+
     def __init__(self, server_raw, tax_percent=0):
         self.server_raw = server_raw
         self.tax_percent = tax_percent
@@ -43,7 +50,9 @@ class Server:
         self.cpu_description = server_raw.get("cpu", "UNKNOWN_CPU")
 
         self.disk_count = server_raw.get("hdd_count", 0)
-        self.disk_size = server_raw.get("hdd_size", 0)
+        self.disk_size_total = server_raw.get("hdd_size", 0)
+        self.disk_map = server_raw.get(
+            "serverDiskData", {"nvme": [], "sata": [], "hdd": [], "general": []})
         self.disk_quick = self.has_quick_disk()
         self.disk_description = self.get_disk_description()
 
@@ -149,6 +158,8 @@ if __name__ == "__main__":
                         help='min disk count')
     parser.add_argument('--disk-size', nargs=1, required=False, type=int,
                         help='min disk capacity (GB)')
+    parser.add_argument('--disk-min-size', nargs=1, required=False, type=int,
+                        help='min disk capacity per disk (GB)')
     parser.add_argument('--disk-quick', action='store_true',
                         help='require SSD/NVMe')
     parser.add_argument('--hw-raid', action='store_true',
@@ -224,8 +235,10 @@ if __name__ == "__main__":
 
         disk_count_matches = server.disk_count >= cli_args.disk_count[
             0] if cli_args.disk_count else True
-        disk_size_matches = server.disk_size >= cli_args.disk_size[
+        disk_size_matches = server.disk_size_total >= cli_args.disk_size[
             0] if cli_args.disk_size else True
+        disk_min_size_matches = server.get_smallest_disk_size(
+        ) >= cli_args.disk_min_size[0] if cli_args.disk_min_size else True
         disk_quick_matches = server.has_quick_disk() if cli_args.disk_quick else True
 
         hw_raid_matches = server.sp_hw_raid if cli_args.hw_raid else True
@@ -235,9 +248,10 @@ if __name__ == "__main__":
         ipv4_matches = server.sp_ipv4 if cli_args.ipv4 else True
         inic_matches = server.sp_inic if cli_args.inic else True
 
-        if price_matches and disk_count_matches and disk_size_matches and disk_quick_matches and \
-                hw_raid_matches and red_psu_matches and cpu_count_matches and ram_matches and ecc_matches and \
-                gpu_matches and ipv4_matches and inic_matches and datacenter_matches:
+        if price_matches and disk_count_matches and disk_size_matches and disk_min_size_matches and \
+                disk_quick_matches and hw_raid_matches and red_psu_matches and cpu_count_matches and \
+                ram_matches and ecc_matches and gpu_matches and ipv4_matches and inic_matches and \
+                datacenter_matches:
 
             print(server.get_header())
             if not cli_args.test_mode:
