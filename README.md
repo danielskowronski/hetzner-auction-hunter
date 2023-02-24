@@ -123,14 +123,14 @@ For more universal executions, you may consider using `docker run --env-file`.
 
 ```bash
 curl https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json | jq > live_data_sb.json
-./hah --data-url "file:///${PWD}/live_data_sb.json" --debug ...
+./hah.py --data-url "file:///${PWD}/live_data_sb.json" --debug ...
 ```
 
 ## docker image for hub.docker.com
 
 ```bash
 hadolint Dockerfile
-export TAG=danielskowronski/hetzner-auction-hunter:v2.0.0-alpha1
+export TAG=danielskowronski/hetzner-auction-hunter:v...
 docker build . -t $TAG --no-cache=true
 docker push $TAG
 ```

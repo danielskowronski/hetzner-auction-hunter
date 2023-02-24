@@ -7,6 +7,7 @@ import json
 import notifiers
 import argparse
 import html2text
+import base64
 
 
 class Server:
@@ -21,7 +22,6 @@ class Server:
         return disk_description
 
     def has_quick_disk(self):
-        # self.server_raw.get("is_highio", False)
         nvme_count = len(self.server_raw.get(
             "serverDiskData", []).get("nvme", []))
         sata_count = len(self.server_raw.get(
@@ -89,81 +89,95 @@ class Server:
 
 
 def send_notification(notifier, server, send_payload):
-    html_html = notifier.schema.get("properties").get("html")
-    html_pamo = notifier.schema.get("properties").get("parse_mode")
-    html_supported = html_html or html_pamo
-
-    title_subject = notifier.schema.get("properties").get("subject")
-    title_title = notifier.schema.get("properties").get("title")
-
-    msg = server.get_message(html=html_supported, verbose=send_payload)
-    title = server.get_header()
-
-    if html_html:
-        if title_subject:
-            notifier.notify(message=msg, html=True, subject=title)
-        elif title_title:
-            notifier.notify(message=msg, html=True, title=title)
-        else:
-            notifier.notify(message=msg, html=True)
-    elif html_pamo:
-        if title_subject:
-            notifier.notify(message=msg, parse_mode="html", subject=title)
-        elif title_title:
-            notifier.notify(message=msg, parse_mode="html", title=title)
-        else:
-            notifier.notify(message=msg, parse_mode="html")
+    if notifier == None:
+        print(f"DUMMY NOTIFICATION TITLE: "+server.get_header())
+        msg = server.get_message(
+            html=False, verbose=send_payload).encode("utf-8")
+        msg_base64 = base64.b64encode(msg).decode("utf-8")
+        print(f"DUMMY NOTIFICATION BODY:  {msg_base64}")
     else:
-        if title_subject:
-            notifier.notify(message=msg, subject=title)
-        elif title_title:
-            notifier.notify(message=msg, title=title)
+        html_html = notifier.schema.get("properties").get("html")
+        html_pamo = notifier.schema.get("properties").get("parse_mode")
+        html_supported = html_html or html_pamo
+
+        title_subject = notifier.schema.get("properties").get("subject")
+        title_title = notifier.schema.get("properties").get("title")
+
+        msg = server.get_message(html=html_supported, verbose=send_payload)
+        title = server.get_header()
+
+        if html_html:
+            if title_subject:
+                notifier.notify(message=msg, html=True, subject=title)
+            elif title_title:
+                notifier.notify(message=msg, html=True, title=title)
+            else:
+                notifier.notify(message=msg, html=True)
+        elif html_pamo:
+            if title_subject:
+                notifier.notify(message=msg, parse_mode="html", subject=title)
+            elif title_title:
+                notifier.notify(message=msg, parse_mode="html", title=title)
+            else:
+                notifier.notify(message=msg, parse_mode="html")
         else:
-            notifier.notify(message=msg)
+            if title_subject:
+                notifier.notify(message=msg, subject=title)
+            elif title_title:
+                notifier.notify(message=msg, title=title)
+            else:
+                notifier.notify(message=msg)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library')
-    parser.add_argument('--data-url',    nargs=1, required=False, type=str, help='URL to live_data_sb.json',
-                        default=['https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'])
-    parser.add_argument('--provider',    nargs=1, required=True, type=str,
+    parser.add_argument('--data-url', nargs=1, required=False, type=str,
+                        default=[
+                            'https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'],
+                        help='URL to live_data_sb.json')
+    parser.add_argument('--provider', nargs=1, required=False, type=str,
+                        default=["dummy"],
                         help='Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html')
-    parser.add_argument('--tax',         nargs=1, required=False, type=int,
-                        help='tax rate (VAT) in percents, defaults to 19 (Germany)', default=[19])
-    parser.add_argument('--price',       nargs=1,
-                        required=False, type=int, help='max price (€)')
-    parser.add_argument('--disk-count',  nargs=1, required=False,
-                        type=int, help='min disk count', default=[1])
-    parser.add_argument('--disk-size',   nargs=1, required=False,
-                        type=int, help='min disk capacity (GB)')
-    parser.add_argument('--disk-quick',  action='store_true',
+    parser.add_argument('--tax', nargs=1, required=False, type=int,
+                        default=[19],
+                        help='tax rate (VAT) in percents, defaults to 19 (Germany)')
+    parser.add_argument('--price', nargs=1, required=False, type=int,
+                        help='max price (€)')
+    parser.add_argument('--disk-count',  nargs=1, required=False, type=int,
+                        default=[1],
+                        help='min disk count')
+    parser.add_argument('--disk-size', nargs=1, required=False, type=int,
+                        help='min disk capacity (GB)')
+    parser.add_argument('--disk-quick', action='store_true',
                         help='require SSD/NVMe')
-    parser.add_argument('--hw-raid',     action='store_true',
+    parser.add_argument('--hw-raid', action='store_true',
                         help='require Hardware RAID')
-    parser.add_argument('--red-psu',     action='store_true',
+    parser.add_argument('--red-psu', action='store_true',
                         help='require Redundant PSU')
-    parser.add_argument('--gpu',         action='store_true',
+    parser.add_argument('--gpu', action='store_true',
                         help='require discrete GPU')
-    parser.add_argument('--ipv4',        action='store_true',
+    parser.add_argument('--ipv4', action='store_true',
                         help='require IPv4')
-    parser.add_argument('--inic',        action='store_true',
+    parser.add_argument('--inic', action='store_true',
                         help='require Intel NIC')
-    parser.add_argument('--cpu-count',   nargs=1, required=False,
-                        type=int, help='min CPU count', default=[1])
-    parser.add_argument('--ram',         nargs=1,
-                        required=False, type=int, help='min RAM (GB)')
-    parser.add_argument('--ecc',         action='store_true',
+    parser.add_argument('--cpu-count', nargs=1, required=False, type=int,
+                        default=[1],
+                        help='min CPU count')
+    parser.add_argument('--ram', nargs=1, required=False, type=int,
+                        help='min RAM (GB)')
+    parser.add_argument('--ecc', action='store_true',
                         help='require ECC memory')
-    parser.add_argument('--dc',          nargs=1, required=False,
+    parser.add_argument('--dc', nargs=1, required=False,
                         help='datacenter (FSN1-DC15) or location (FSN)')
-    parser.add_argument('-f',            nargs='?',
-                        help='state file', default='/tmp/hah.txt')
+    parser.add_argument('-f', nargs='?',
+                        default='/tmp/hah.txt',
+                        help='state file')
     parser.add_argument('--exclude-tax', action='store_true',
                         help='exclude tax from output price')
-    parser.add_argument('--test-mode',   action='store_true',
+    parser.add_argument('--test-mode',  action='store_true',
                         help='do not send actual messages and ignore state file')
-    parser.add_argument('--debug',       action='store_true',
+    parser.add_argument('--debug', action='store_true',
                         help='debug mode')
     parser.add_argument('--send-payload', action='store_true',
                         help='send server data as JSON payload')
@@ -172,7 +186,10 @@ if __name__ == "__main__":
     if not cli_args.test_mode:
         f = open(cli_args.f, 'a+')
         idsProcessed = open(cli_args.f).read()
-        notifier = notifiers.get_notifier(cli_args.provider[0])
+        if cli_args.provider[0] == "dummy":
+            notifier = None
+        else:
+            notifier = notifiers.get_notifier(cli_args.provider[0])
 
     servers = None
     try:
