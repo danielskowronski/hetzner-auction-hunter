@@ -105,7 +105,7 @@ To get servers cheaper than 38 EUR with more than 24GB of RAM, disks at least 3T
 
 ### docker
 
-Run in test mode or change path `"${HOME}/Library/Application Support/telegram-send.conf"` to where your local telegram-send installed config. 
+Example run for Pushover:
 
 ```bash
 docker build . -t hetzner-auction-hunter:latest --no-cache=true
