@@ -84,20 +84,26 @@ class Server:
         msg = f"Hetzner server #{self.id} in {self.datacenter} for {self.price}€"
         return msg
 
-    def get_message(self, html=True, verbose=True):
+    def get_message(self, html=True, verbose=True, new_line="<br />"):
         url = self.get_url()
-        msg = f"<b>Hetzner</b> server #{self.id} in {self.datacenter} for {self.price}€: <br />" + \
-              f"<b>{self.ram_size}GB RAM, {self.cpu_count}x {self.cpu_description}</b>, {self.disk_description}<br />" + \
-              f"<a href='{self.get_url()}'>{url}</a><br />"
+        msg = f"<b>Hetzner</b> server #{self.id} in {self.datacenter} for {self.price}€: {new_line}" + \
+              f"<b>{self.ram_size}GB RAM, {self.cpu_count}x {self.cpu_description}</b>, {self.disk_description}{new_line}" + \
+              f"<a href='{self.get_url()}'>{url}</a>{new_line}"
         if verbose:
             json_raw = json.dumps(self.server_raw)
-            msg += f"<br /><u>Details</u>:<br /><pre>{json_raw}</pre><br />"
+            msg += f"{new_line}<u>Details</u>:<br /><pre>{json_raw}</pre>{new_line}"
         if not html:
             msg = html2text.html2text(msg)
         return msg
 
 
 def send_notification(notifier, server, send_payload):
+    # Telegram html doesn't accept <br>
+    if notifier.name == "telegram":
+        new_line = "\n"
+    else:
+        new_line = "<br />"
+
     if notifier == None:
         print(f"DUMMY NOTIFICATION TITLE: "+server.get_header())
         msg = server.get_message(
@@ -112,30 +118,23 @@ def send_notification(notifier, server, send_payload):
         title_subject = notifier.schema.get("properties").get("subject")
         title_title = notifier.schema.get("properties").get("title")
 
-        msg = server.get_message(html=html_supported, verbose=send_payload)
+        msg = server.get_message(html=html_supported, verbose=send_payload, new_line=new_line)
         title = server.get_header()
 
+        params = {"message": msg}
+
         if html_html:
-            if title_subject:
-                notifier.notify(message=msg, html=True, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, html=True, title=title)
-            else:
-                notifier.notify(message=msg, html=True)
+            params["html"] = True
         elif html_pamo:
-            if title_subject:
-                notifier.notify(message=msg, parse_mode="html", subject=title)
-            elif title_title:
-                notifier.notify(message=msg, parse_mode="html", title=title)
-            else:
-                notifier.notify(message=msg, parse_mode="html")
-        else:
-            if title_subject:
-                notifier.notify(message=msg, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, title=title)
-            else:
-                notifier.notify(message=msg)
+            params["parse_mode"] = "html"
+
+        if title_subject:
+            params["subject"] = title
+        elif title_title:
+            params["title"] = title
+
+        response = notifier.notify(**params)
+        response.raise_on_errors()
 
 
 if __name__ == "__main__":
