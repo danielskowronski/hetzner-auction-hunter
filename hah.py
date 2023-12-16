@@ -100,7 +100,6 @@ class Server:
 def send_notification(notifier, server, send_payload):
     # Telegram html doesn't accept <br>
     if notifier.name == "telegram":
-        print("Detected telegram")
         new_line = "\n"
     else:
         new_line = "<br />"
