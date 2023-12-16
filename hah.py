@@ -115,27 +115,20 @@ def send_notification(notifier, server, send_payload):
         msg = server.get_message(html=html_supported, verbose=send_payload)
         title = server.get_header()
 
+        params = {"message": msg}
+
         if html_html:
-            if title_subject:
-                notifier.notify(message=msg, html=True, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, html=True, title=title)
-            else:
-                notifier.notify(message=msg, html=True)
+            params["html"] = True
         elif html_pamo:
-            if title_subject:
-                notifier.notify(message=msg, parse_mode="html", subject=title)
-            elif title_title:
-                notifier.notify(message=msg, parse_mode="html", title=title)
-            else:
-                notifier.notify(message=msg, parse_mode="html")
-        else:
-            if title_subject:
-                notifier.notify(message=msg, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, title=title)
-            else:
-                notifier.notify(message=msg)
+            params["parse_mode"] = "html"
+
+        if title_subject:
+            params["subject"] = title
+        elif title_title:
+            params["title"] = title
+
+        response = notifier.notify(**params)
+        response.raise_on_errors()
 
 
 if __name__ == "__main__":
