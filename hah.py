@@ -192,6 +192,9 @@ if __name__ == "__main__":
                         help='debug mode')
     parser.add_argument('--send-payload', action='store_true',
                         help='send server data as JSON payload')
+    parser.add_argument('--search', nargs=1, required=False, type=str,
+                        help='search for specific server by CPU description')
+
     cli_args = parser.parse_args()
 
     if not cli_args.test_mode:
@@ -248,10 +251,16 @@ if __name__ == "__main__":
         ipv4_matches = server.sp_ipv4 if cli_args.ipv4 else True
         inic_matches = server.sp_inic if cli_args.inic else True
 
+        if cli_args.search:
+            search_matches = cli_args.search[0] in server.cpu_description
+        else:
+            search_matches = True
+
+
         if price_matches and disk_count_matches and disk_size_matches and disk_min_size_matches and \
                 disk_quick_matches and hw_raid_matches and red_psu_matches and cpu_count_matches and \
                 ram_matches and ecc_matches and gpu_matches and ipv4_matches and inic_matches and \
-                datacenter_matches:
+                datacenter_matches and search_matches:
 
             print(server.get_header())
             if not cli_args.test_mode:
