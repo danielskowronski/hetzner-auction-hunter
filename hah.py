@@ -8,7 +8,6 @@ import argparse
 import html2text
 import base64
 
-
 class Server:
     def get_disk_description(self):
         disk_descriptors = [
@@ -75,90 +74,73 @@ class Server:
                 self.sp_ipv4 = True
             if special == 'iNIC':
                 self.sp_inic = True
-        # interesting fields left: setup_price, fixed_price, next_reduce*, serverDiskData, traffic, bandwidth
 
     def get_url(self):
         return f"https://www.hetzner.com/sb?search={self.id}"
 
     def get_header(self):
-        msg = f"Hetzner server #{self.id} in {self.datacenter} for {self.price}€"
+        msg = f"Hetzner server #{self.id} in {self.datacenter} for {self.price:.2f}€"
         return msg
+
+    def get_configuration(self):
+        config = f"CPU: {self.cpu_description}, RAM: {self.ram_size}GB, Disks: {self.disk_description}"
+        return config
 
     def get_message(self, html=True, verbose=True):
         url = self.get_url()
-        msg = f"<b>Hetzner</b> server #{self.id} in {self.datacenter} for {self.price}€: <br />" + \
+        msg = f"<b>Hetzner</b> server #{self.id} in {self.datacenter} for {self.price:.2f}€: <br />" + \
               f"<b>{self.ram_size}GB RAM, {self.cpu_count}x {self.cpu_description}</b>, {self.disk_description}<br />" + \
               f"<a href='{self.get_url()}'>{url}</a><br />"
         if verbose:
-            json_raw = json.dumps(self.server_raw)
+            json_raw = json.dumps(self.server_raw, indent=4)
             msg += f"<br /><u>Details</u>:<br /><pre>{json_raw}</pre><br />"
         if not html:
             msg = html2text.html2text(msg)
         return msg
 
-
 def send_notification(notifier, server, send_payload):
-    if notifier == None:
-        print(f"DUMMY NOTIFICATION TITLE: "+server.get_header())
-        msg = server.get_message(
-            html=False, verbose=send_payload).encode("utf-8")
+    if notifier is None:
+        print(f"DUMMY NOTIFICATION TITLE: {server.get_header()}")
+        msg = server.get_message(html=False, verbose=send_payload).encode("utf-8")
         msg_base64 = base64.b64encode(msg).decode("utf-8")
-        print(f"DUMMY NOTIFICATION BODY:  {msg_base64}")
+        print(f"DUMMY NOTIFICATION BODY: {msg_base64}")
     else:
-        html_html = notifier.schema.get("properties").get("html")
-        html_pamo = notifier.schema.get("properties").get("parse_mode")
-        html_supported = html_html or html_pamo
+        html_supported = notifier.schema.get("properties").get("html") or \
+                         notifier.schema.get("properties").get("parse_mode")
 
-        title_subject = notifier.schema.get("properties").get("subject")
-        title_title = notifier.schema.get("properties").get("title")
+        title_field = notifier.schema.get("properties").get("subject") or \
+                      notifier.schema.get("properties").get("title")
 
         msg = server.get_message(html=html_supported, verbose=send_payload)
         title = server.get_header()
 
-        if html_html:
-            if title_subject:
-                notifier.notify(message=msg, html=True, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, html=True, title=title)
+        notify_args = {'message': msg}
+        if html_supported:
+            if title_field:
+                notify_args['html'] = True
             else:
-                notifier.notify(message=msg, html=True)
-        elif html_pamo:
-            if title_subject:
-                notifier.notify(message=msg, parse_mode="html", subject=title)
-            elif title_title:
-                notifier.notify(message=msg, parse_mode="html", title=title)
-            else:
-                notifier.notify(message=msg, parse_mode="html")
-        else:
-            if title_subject:
-                notifier.notify(message=msg, subject=title)
-            elif title_title:
-                notifier.notify(message=msg, title=title)
-            else:
-                notifier.notify(message=msg)
+                notify_args['parse_mode'] = "html"
+        if title_field:
+            notify_args[title_field] = title
 
+        notifier.notify(**notify_args)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='hah.py -- checks for newest servers on Hetzner server auction (server-bidding) and pushes to one of dozen providers supported by Notifiers library')
-    parser.add_argument('--data-url', nargs=1, required=False, type=str,
-                        default=[
-                            'https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json'],
+    parser.add_argument('--data-url', type=str, default='https://www.hetzner.com/_resources/app/jsondata/live_data_sb.json',
                         help='URL to live_data_sb.json')
-    parser.add_argument('--provider', nargs=1, required=False, type=str,
-                        default=["dummy"],
+    parser.add_argument('--provider', type=str, default="dummy",
                         help='Notifiers provider name - see https://notifiers.readthedocs.io/en/latest/providers/index.html')
-    parser.add_argument('--tax', nargs=1, required=False, type=int,
-                        default=[19],
+    parser.add_argument('--tax', type=int, default=19,
                         help='tax rate (VAT) in percents, defaults to 19 (Germany)')
-    parser.add_argument('--price', nargs=1, required=False, type=int,
+    parser.add_argument('--price', type=int,
                         help='max price (€)')
-    parser.add_argument('--disk-count',  nargs=1, required=False, type=int,
-                        default=[1],
+    parser.add_argument('--disk-count',  type=int, default=1,
                         help='min disk count')
-    parser.add_argument('--disk-size', nargs=1, required=False, type=int,
+    parser.add_argument('--disk-size', type=int,
                         help='min disk capacity (GB)')
-    parser.add_argument('--disk-min-size', nargs=1, required=False, type=int,
+    parser.add_argument('--disk-min-size', type=int,
                         help='min disk capacity per disk (GB)')
     parser.add_argument('--disk-quick', action='store_true',
                         help='require SSD/NVMe')
@@ -172,17 +154,16 @@ if __name__ == "__main__":
                         help='require IPv4')
     parser.add_argument('--inic', action='store_true',
                         help='require Intel NIC')
-    parser.add_argument('--cpu-count', nargs=1, required=False, type=int,
-                        default=[1],
+    parser.add_argument('--cpu-count', type=int, default=1,
                         help='min CPU count')
-    parser.add_argument('--ram', nargs=1, required=False, type=int,
+    parser.add_argument('--ram', type=int,
                         help='min RAM (GB)')
     parser.add_argument('--ecc', action='store_true',
                         help='require ECC memory')
-    parser.add_argument('--dc', nargs=1, required=False,
+    parser.add_argument('--dc', type=str,
                         help='datacenter (FSN1-DC15) or location (FSN)')
-    parser.add_argument('-f', nargs='?',
-                        default='/tmp/hah.txt',
+    parser.add_argument('--cpu-model', type=str, help='Filter by CPU model (e.g., "Ryzen 9 3900")')
+    parser.add_argument('-f', default='/tmp/hah.txt',
                         help='state file')
     parser.add_argument('--exclude-tax', action='store_true',
                         help='exclude tax from output price')
@@ -195,18 +176,15 @@ if __name__ == "__main__":
     cli_args = parser.parse_args()
 
     if not cli_args.test_mode:
-        f = open(cli_args.f, 'a+')
-        idsProcessed = open(cli_args.f).read()
-        if cli_args.provider[0] == "dummy":
-            notifier = None
-        else:
-            notifier = notifiers.get_notifier(cli_args.provider[0])
+        with open(cli_args.f, 'a+') as f:
+            idsProcessed = f.read()
 
-    servers = None
+    notifier = notifiers.get_notifier(cli_args.provider) if cli_args.provider != "dummy" else None
+
     try:
         s = requests.Session()
         s.mount('file://', requests_file.FileAdapter())
-        rsp = s.get(cli_args.data_url[0], headers={
+        rsp = s.get(cli_args.data_url, headers={
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.3 Safari/605.1.15'})
         servers = json.loads(rsp.text)['server']
     except Exception as e:
@@ -215,48 +193,36 @@ if __name__ == "__main__":
         exit(1)
 
     for server_raw in servers:
-        tax = cli_args.tax[0] if not cli_args.exclude_tax else 0.0
+        tax = cli_args.tax if not cli_args.exclude_tax else 0.0
         server = Server(server_raw, tax)
 
         if cli_args.debug:
-            print(json.dumps(server_raw))
+            print(json.dumps(server_raw, indent=4))
         if not cli_args.test_mode and str(server.id) in idsProcessed:
             continue
 
-        datacenter_matches = False if cli_args.dc else True
-        if cli_args.dc is not None and cli_args.dc[0] in server.datacenter:
-            datacenter_matches = True
+        datacenter_matches = cli_args.dc is None or cli_args.dc in server.datacenter
+        price_matches = cli_args.price is None or server.price <= cli_args.price
+        cpu_count_matches = server.cpu_count >= cli_args.cpu_count
+        ram_matches = cli_args.ram is None or server.ram_size >= cli_args.ram
+        disk_count_matches = server.disk_count >= cli_args.disk_count
+        disk_size_matches = cli_args.disk_size is None or server.disk_size_total >= cli_args.disk_size
+        disk_min_size_matches = cli_args.disk_min_size is None or server.get_smallest_disk_size() >= cli_args.disk_min_size
+        disk_quick_matches = not cli_args.disk_quick or server.has_quick_disk()
+        hw_raid_matches = not cli_args.hw_raid or server.sp_hw_raid
+        red_psu_matches = not cli_args.red_psu or server.sp_red_psu
+        ecc_matches = not cli_args.ecc or server.sp_ecc
+        gpu_matches = not cli_args.gpu or server.sp_gpu
+        ipv4_matches = not cli_args.ipv4 or server.sp_ipv4
+        inic_matches = not cli_args.inic or server.sp_inic
+        cpu_model_matches = cli_args.cpu_model is None or cli_args.cpu_model.lower() in server.cpu_description.lower()
 
-        price_matches = server.price <= cli_args.price[0] if cli_args.price else True
-
-        cpu_count_matches = server.cpu_count >= cli_args.cpu_count[
-            0] if cli_args.cpu_count else True
-        ram_matches = server.ram_size >= cli_args.ram[0] if cli_args.ram else True
-
-        disk_count_matches = server.disk_count >= cli_args.disk_count[
-            0] if cli_args.disk_count else True
-        disk_size_matches = server.disk_size_total >= cli_args.disk_size[
-            0] if cli_args.disk_size else True
-        disk_min_size_matches = server.get_smallest_disk_size(
-        ) >= cli_args.disk_min_size[0] if cli_args.disk_min_size else True
-        disk_quick_matches = server.has_quick_disk() if cli_args.disk_quick else True
-
-        hw_raid_matches = server.sp_hw_raid if cli_args.hw_raid else True
-        red_psu_matches = server.sp_red_psu if cli_args.red_psu else True
-        ecc_matches = server.sp_ecc if cli_args.ecc else True
-        gpu_matches = server.sp_gpu if cli_args.gpu else True
-        ipv4_matches = server.sp_ipv4 if cli_args.ipv4 else True
-        inic_matches = server.sp_inic if cli_args.inic else True
-
-        if price_matches and disk_count_matches and disk_size_matches and disk_min_size_matches and \
-                disk_quick_matches and hw_raid_matches and red_psu_matches and cpu_count_matches and \
-                ram_matches and ecc_matches and gpu_matches and ipv4_matches and inic_matches and \
-                datacenter_matches:
-
-            print(server.get_header())
+        if all([datacenter_matches, price_matches, cpu_count_matches, ram_matches,
+                disk_count_matches, disk_size_matches, disk_min_size_matches, disk_quick_matches,
+                hw_raid_matches, red_psu_matches, ecc_matches, gpu_matches, ipv4_matches, inic_matches,
+                cpu_model_matches]):
+            print(f"{server.get_header()} | {server.get_configuration()}")
             if not cli_args.test_mode:
                 send_notification(notifier, server, cli_args.send_payload)
-                f.write(","+str(server.id))
-
-    if not cli_args.test_mode:
-        f.close()
+                with open(cli_args.f, 'a') as f:
+                    f.write(","+str(server.id))
